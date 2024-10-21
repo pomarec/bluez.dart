@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:bluez/src/bluez_adapter.dart';
+import 'package:bluez/src/bluez_agent.dart';
 import 'package:bluez/src/bluez_agent_object.dart';
 import 'package:bluez/src/bluez_characteristic.dart';
 import 'package:bluez/src/bluez_device.dart';
@@ -9,7 +10,6 @@ import 'package:bluez/src/bluez_gatt_descriptor.dart';
 import 'package:bluez/src/bluez_gatt_service.dart';
 import 'package:bluez/src/bluez_object.dart';
 import 'package:dbus/dbus.dart';
-import 'package:bluez/src/bluez_agent.dart';
 
 /// A client that connects to BlueZ.
 class BlueZClient {
@@ -26,6 +26,10 @@ class BlueZClient {
   /// Stream of devices as they are removed.
   Stream<BlueZDevice> get deviceRemoved =>
       _deviceRemovedStreamController.stream;
+
+  /// Stream of property changed.
+  Stream<BlueZObject> get propertyChanged =>
+      _propertyChangedStreamController.stream;
 
   /// The bus this client is connected to.
   final DBusClient _bus;
@@ -48,6 +52,8 @@ class BlueZClient {
       StreamController<BlueZDevice>.broadcast();
   final _deviceRemovedStreamController =
       StreamController<BlueZDevice>.broadcast();
+  final _propertyChangedStreamController =
+      StreamController<BlueZObject>.broadcast();
 
   /// Registered agent.
   BlueZAgentObject? _agent;
@@ -106,6 +112,7 @@ class BlueZClient {
         if (object != null) {
           object.updateProperties(
               signal.propertiesInterface, signal.changedProperties);
+          _propertyChangedStreamController.add(object);
         }
       }
     });
